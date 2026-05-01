@@ -5,13 +5,11 @@ import { formatDate } from "../utils/formatDate";
 import { updateStatusSchema } from "../schemas/updateStatus.schema";
 import { rescheduleSchema } from "../schemas/reschedule.schema";
 import { createAppointmentSchema } from "../schemas/appointment.schema";
+import { User } from "../models/User";
 
 const repo = new AppointmentRepository();
 const service = new AppointmentService();
 
-/**
- * TIPAGEM CORRETA (resolve erro string | string[])
- */
 type IdRequest = Request<{ id: string }>;
 
 export class AppointmentController {
@@ -25,24 +23,29 @@ export class AppointmentController {
 
       await service.validateSlot(start);
 
-      const exists = await repo.findByPhone(data.phone);
-      if (exists) {
-        return res.status(409).json({
-          message: "Telefone já tem agendamento",
+      // cria ou reutiliza user automaticamente
+      let user = await User.findOne({ phone: data.phone });
+
+      if (!user) {
+        user = await User.create({
+          name: data.clientName,
+          phone: data.phone,
         });
       }
 
       const appointment = await repo.create({
-        ...data,
+        userId: user._id,
+        service: data.service,
         scheduledAt: start,
+        price: data.price,
       });
 
       return res.status(201).json({
         ...appointment.toObject(),
         scheduledAtFormatted: formatDate(appointment.scheduledAt),
       });
+
     } catch (err: any) {
-      // Se for o erro específico de lotação, retorna 409
       if (err.message === "Horário lotado") {
         return res.status(409).json({
           message: "Erro de validação",
@@ -50,7 +53,6 @@ export class AppointmentController {
         });
       }
 
-      // Para outros erros (como Zod ou campos faltando), mantém o 400
       return res.status(400).json({
         message: "Erro de validação",
         error: err.errors || err.message,
@@ -63,7 +65,7 @@ export class AppointmentController {
     const data = await repo.findAll();
 
     return res.json(
-      data.map((a) => ({
+      data.map((a: any) => ({
         ...a.toObject(),
         scheduledAtFormatted: formatDate(a.scheduledAt),
       }))
@@ -141,6 +143,7 @@ export class AppointmentController {
           scheduledAtFormatted: formatDate(appointment.scheduledAt),
         },
       });
+
     } catch (err: any) {
       return res.status(400).json({
         message: err.message,
@@ -193,5 +196,4 @@ export class AppointmentController {
 
     return res.json(slots);
   }
-
 }

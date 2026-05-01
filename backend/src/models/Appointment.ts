@@ -1,23 +1,21 @@
 import mongoose from "mongoose";
 
 export interface IAppointment {
-  clientName: string;
-  phone: string;
+  userId: mongoose.Types.ObjectId;
+
   service: string;
   scheduledAt: Date;
+
   status: "pending" | "confirmed" | "canceled" | "done";
+
   price?: number;
 }
 
 const AppointmentSchema = new mongoose.Schema<IAppointment>(
   {
-    clientName: {
-      type: String,
-      required: true,
-    },
-
-    phone: {
-      type: String,
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
       required: true,
     },
 
