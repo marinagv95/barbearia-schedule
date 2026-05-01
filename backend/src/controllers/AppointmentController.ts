@@ -1,350 +1,196 @@
 import { Request, Response } from "express";
-import { Appointment } from "../models/Appointment";
-
-import { createAppointmentSchema } from "../schemas/appointment.schema";
+import { AppointmentRepository } from "../repositories/AppointmentRepository";
+import { AppointmentService } from "../services/AppointmentService";
+import { formatDate } from "../utils/formatDate";
 import { updateStatusSchema } from "../schemas/updateStatus.schema";
 import { rescheduleSchema } from "../schemas/reschedule.schema";
+import { createAppointmentSchema } from "../schemas/appointment.schema";
 
-import { formatDate } from "../utils/formatDate";
-import { isHoliday, getHolidayName } from "../utils/holidays";
-import { toBrazilTime } from "../utils/date";
+const repo = new AppointmentRepository();
+const service = new AppointmentService();
 
-const addMinutes = (date: Date, minutes: number) => {
-  return new Date(date.getTime() + minutes * 60000);
-};
-
-const TIMEZONE = "America/Sao_Paulo";
+/**
+ * TIPAGEM CORRETA (resolve erro string | string[])
+ */
+type IdRequest = Request<{ id: string }>;
 
 export class AppointmentController {
+
   // CREATE
   async create(req: Request, res: Response) {
     try {
       const data = createAppointmentSchema.parse(req.body);
 
-      const startUTC = new Date(data.scheduledAt);
-      const start = toBrazilTime(startUTC);
-      const now = toBrazilTime(new Date());
-      const endUTC = addMinutes(startUTC, 30);
+      const start = new Date(data.scheduledAt);
 
-      if (start < now) {
-        return res.status(400).json({
-          message: "Não é possível agendar no passado",
-        });
-      }
+      await service.validateSlot(start);
 
-      if (start.getDay() === 0) {
-        return res.status(400).json({
-          message: "Não atendemos aos domingos",
-        });
-      }
-
-      const holidayName = getHolidayName(start);
-      if (holidayName) {
-        return res.status(400).json({
-          message: `Não atendemos em feriados (${holidayName})`,
-        });
-      }
-
-      const hour = start.getHours();
-      if (hour < 8 || hour >= 18) {
-        return res.status(400).json({
-          message: "Fora do horário de funcionamento (08h às 18h)",
-        });
-      }
-
-      const count = await Appointment.countDocuments({
-        scheduledAt: {
-          $gte: new Date(startUTC.getTime() - 30 * 60000),
-          $lt: endUTC,
-        },
-      });
-
-      if (count >= 3) {
+      const exists = await repo.findByPhone(data.phone);
+      if (exists) {
         return res.status(409).json({
-          message: "Horário lotado (máx. 3 atendimentos)",
+          message: "Telefone já tem agendamento",
         });
       }
 
-      const phoneExists = await Appointment.findOne({ phone: data.phone });
-
-      if (phoneExists) {
-        return res.status(409).json({
-          message: "Já existe um agendamento para esse telefone",
-        });
-      }
-
-      const appointment = await Appointment.create({
+      const appointment = await repo.create({
         ...data,
-        scheduledAt: startUTC,
+        scheduledAt: start,
       });
 
-      return res.status(201).json(appointment);
-    } catch (error: any) {
+      return res.status(201).json({
+        ...appointment.toObject(),
+        scheduledAtFormatted: formatDate(appointment.scheduledAt),
+      });
+    } catch (err: any) {
+      // Se for o erro específico de lotação, retorna 409
+      if (err.message === "Horário lotado") {
+        return res.status(409).json({
+          message: "Erro de validação",
+          error: err.message,
+        });
+      }
+
+      // Para outros erros (como Zod ou campos faltando), mantém o 400
       return res.status(400).json({
         message: "Erro de validação",
-        error: error.errors || error.message,
+        error: err.errors || err.message,
       });
     }
   }
 
   // LIST
   async list(req: Request, res: Response) {
-    try {
-      const appointments = await Appointment.find().sort({
-        scheduledAt: 1,
-      });
+    const data = await repo.findAll();
 
-      const formatted = appointments.map((a) => ({
+    return res.json(
+      data.map((a) => ({
         ...a.toObject(),
         scheduledAtFormatted: formatDate(a.scheduledAt),
-      }));
-
-      return res.json(formatted);
-    } catch (error: any) {
-      return res.status(500).json({
-        message: "Erro ao listar agendamentos",
-        error: error.message,
-      });
-    }
+      }))
+    );
   }
 
   // GET BY ID
-  async getById(req: Request, res: Response) {
-    try {
-      const { id } = req.params;
+  async getById(req: IdRequest, res: Response) {
+    const appointment = await repo.findById(req.params.id);
 
-      const appointment = await Appointment.findById(id);
-
-      if (!appointment) {
-        return res.status(404).json({
-          message: "Agendamento não encontrado",
-        });
-      }
-
-      return res.json({
-        ...appointment.toObject(),
-        scheduledAtFormatted: formatDate(appointment.scheduledAt),
-      });
-    } catch (error: any) {
-      return res.status(500).json({
-        message: "Erro ao buscar agendamento",
-        error: error.message,
-      });
+    if (!appointment) {
+      return res.status(404).json({ message: "Não encontrado" });
     }
+
+    return res.json({
+      ...appointment.toObject(),
+      scheduledAtFormatted: formatDate(appointment.scheduledAt),
+    });
   }
 
   // UPDATE STATUS
-  async updateStatus(req: Request, res: Response) {
-    try {
-      const { id } = req.params;
-      const { status } = updateStatusSchema.parse(req.body);
+  async updateStatus(req: IdRequest, res: Response) {
+    const { status } = updateStatusSchema.parse(req.body);
 
-      const appointment = await Appointment.findById(id);
+    const appointment = await repo.findById(req.params.id);
 
-      if (!appointment) {
-        return res.status(404).json({
-          message: "Agendamento não encontrado",
-        });
-      }
+    if (!appointment) {
+      return res.status(404).json({ message: "Não encontrado" });
+    }
 
-      const allowedTransitions: any = {
-        pending: ["confirmed", "canceled"],
-        confirmed: ["done", "canceled"],
-        done: [],
-        canceled: [],
-      };
+    const allowed: any = {
+      pending: ["confirmed", "canceled"],
+      confirmed: ["done", "canceled"],
+      done: [],
+      canceled: [],
+    };
 
-      if (!allowedTransitions[appointment.status].includes(status)) {
-        return res.status(400).json({
-          message: "Transição de status inválida",
-        });
-      }
-
-      appointment.status = status;
-      await appointment.save();
-
-      return res.json(appointment);
-    } catch (error: any) {
+    if (!allowed[appointment.status].includes(status)) {
       return res.status(400).json({
-        message: "Erro ao atualizar status",
-        error: error.errors || error.message,
+        message: "Transição de status inválida",
       });
     }
+
+    appointment.status = status;
+    await repo.update(appointment);
+
+    return res.json({
+      ...appointment.toObject(),
+      scheduledAtFormatted: formatDate(appointment.scheduledAt),
+    });
   }
 
   // RESCHEDULE
-  async reschedule(req: Request, res: Response) {
+  async reschedule(req: IdRequest, res: Response) {
     try {
-      const { id } = req.params;
       const { scheduledAt } = rescheduleSchema.parse(req.body);
 
-      const startUTC = new Date(scheduledAt);
-      const start = toBrazilTime(startUTC);
-      const now = toBrazilTime(new Date());
-      const endUTC = addMinutes(startUTC, 30);
+      const start = new Date(scheduledAt);
 
-      const appointment = await Appointment.findById(id);
+      const appointment = await repo.findById(req.params.id);
 
       if (!appointment) {
-        return res.status(404).json({
-          message: "Agendamento não encontrado",
-        });
+        return res.status(404).json({ message: "Não encontrado" });
       }
 
-      if (start < now) {
-        return res.status(400).json({
-          message: "Não é possível remarcar para o passado",
-        });
-      }
+      await service.validateSlot(start, req.params.id);
 
-      if (start.getDay() === 0) {
-        return res.status(400).json({
-          message: "Não atendemos aos domingos",
-        });
-      }
-
-      const holidayName = getHolidayName(start);
-      if (holidayName) {
-        return res.status(400).json({
-          message: `Não atendemos em feriados (${holidayName})`,
-        });
-      }
-
-      const hour = start.getHours();
-      if (hour < 8 || hour >= 18) {
-        return res.status(400).json({
-          message: "Fora do horário de funcionamento",
-        });
-      }
-
-      const count = await Appointment.countDocuments({
-        _id: { $ne: id },
-        scheduledAt: {
-          $gte: new Date(startUTC.getTime() - 30 * 60000),
-          $lt: endUTC,
-        },
-      });
-
-      if (count >= 3) {
-        return res.status(409).json({
-          message: "Horário lotado (máx. 3 atendimentos)",
-        });
-      }
-
-      appointment.scheduledAt = startUTC;
-      await appointment.save();
+      appointment.scheduledAt = start;
+      await repo.update(appointment);
 
       return res.json({
-        message: "Agendamento remarcado com sucesso",
-        appointment,
+        message: "Remarcado com sucesso",
+        appointment: {
+          ...appointment.toObject(),
+          scheduledAtFormatted: formatDate(appointment.scheduledAt),
+        },
       });
-    } catch (error: any) {
+    } catch (err: any) {
       return res.status(400).json({
-        message: "Erro ao remarcar agendamento",
-        error: error.errors || error.message,
+        message: err.message,
       });
     }
   }
 
   // DELETE
-  async delete(req: Request, res: Response) {
-    try {
-      const { id } = req.params;
+  async delete(req: IdRequest, res: Response) {
+    const deleted = await repo.delete(req.params.id);
 
-      const appointment = await Appointment.findByIdAndDelete(id);
-
-      if (!appointment) {
-        return res.status(404).json({
-          message: "Agendamento não encontrado",
-        });
-      }
-
-      return res.json({
-        message: "Agendamento removido com sucesso",
-      });
-    } catch (error: any) {
-      return res.status(500).json({
-        message: "Erro ao deletar agendamento",
-        error: error.message,
-      });
+    if (!deleted) {
+      return res.status(404).json({ message: "Não encontrado" });
     }
+
+    return res.json({ message: "Deletado com sucesso" });
   }
 
-  // AVAILABLE SLOTS (CORRIGIDO)
+  // AVAILABLE SLOTS
   async getAvailableSlots(req: Request, res: Response) {
-    try {
-      const { date } = req.query;
+    const { date } = req.query;
 
-      if (!date || typeof date !== "string") {
-        return res.status(400).json({
-          message: "Data é obrigatória (YYYY-MM-DD)",
-        });
-      }
-
-      const baseUTC = new Date(`${date}T00:00:00.000Z`);
-      const baseBR = toBrazilTime(baseUTC);
-
-      if (baseBR.getDay() === 0) {
-        return res.status(400).json({
-          message: "Barbearia fechada aos domingos",
-        });
-      }
-
-      if (isHoliday(baseBR)) {
-        return res.status(400).json({
-          message: "Barbearia fechada em feriados",
-        });
-      }
-
-      const dayStartUTC = new Date(`${date}T00:00:00.000Z`);
-      const dayEndUTC = new Date(`${date}T23:59:59.999Z`);
-
-      const appointments = await Appointment.find({
-        scheduledAt: {
-          $gte: dayStartUTC,
-          $lte: dayEndUTC,
-        },
-      });
-
-      const slots: string[] = [];
-
-      for (let hour = 8; hour < 18; hour++) {
-        for (let minute of [0, 30]) {
-          const slotUTC = new Date(
-            Date.UTC(
-              baseBR.getFullYear(),
-              baseBR.getMonth(),
-              baseBR.getDate(),
-              hour + 3, // 🔥 converte Brasil → UTC
-              minute
-            )
-          );
-
-          const slotEndUTC = addMinutes(slotUTC, 30);
-
-          const count = appointments.filter((a) => {
-            const time = new Date(a.scheduledAt).getTime();
-
-            return (
-              time >= slotUTC.getTime() - 30 * 60000 &&
-              time < slotEndUTC.getTime()
-            );
-          }).length;
-
-          if (count < 3) {
-            slots.push(
-              `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`
-            );
-          }
-        }
-      }
-
-      return res.json(slots);
-    } catch (error: any) {
-      return res.status(500).json({
-        message: "Erro ao buscar horários disponíveis",
-        error: error.message,
+    if (!date || typeof date !== "string") {
+      return res.status(400).json({
+        message: "Data obrigatória",
       });
     }
+
+    const start = new Date(`${date}T00:00:00.000Z`);
+    const end = new Date(`${date}T23:59:59.999Z`);
+
+    const appointments = await repo.findByDateRange(start, end);
+
+    const slots: string[] = [];
+
+    for (let h = 8; h < 18; h++) {
+      for (let m of [0, 30]) {
+        const key = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+
+        const count = appointments.filter((a) => {
+          const d = new Date(a.scheduledAt);
+          const hh = String(d.getHours()).padStart(2, "0");
+          const mm = d.getMinutes() < 30 ? "00" : "30";
+          return `${hh}:${mm}` === key;
+        }).length;
+
+        if (count < 3) slots.push(key);
+      }
+    }
+
+    return res.json(slots);
   }
 }
