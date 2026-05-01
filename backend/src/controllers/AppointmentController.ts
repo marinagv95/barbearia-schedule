@@ -193,4 +193,5 @@ export class AppointmentController {
 
     return res.json(slots);
   }
+
 }

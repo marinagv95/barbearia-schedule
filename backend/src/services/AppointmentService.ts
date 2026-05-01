@@ -15,27 +15,29 @@ const normalizeToSlotStart = (date: Date) => {
   return d;
 };
 
+
 export class AppointmentService {
   constructor(private repo = new AppointmentRepository()) {}
 
   async validateSlot(start: Date, ignoreId?: string) {
     const now = new Date();
 
-    if (!isValidSlotTime(start)) {
-      throw new Error("Slot inválido (use 00 ou 30)");
-    }
-
+    // Validações básicas (formatos e passado)
     if (start < now) throw new Error("Não pode agendar no passado");
-    if (start.getDay() === 0) throw new Error("Domingo fechado");
+    
+    // getUTCDay: 0 é domingo. Usar UTC para evitar erro de fuso no dia da semana.
+    if (start.getUTCDay() === 0) throw new Error("Domingo fechado");
 
-    const holiday = getHolidayName(start);
-    if (holiday) throw new Error(`Feriado (${holiday})`);
-
-    const hour = start.getHours();
+    // Valida horário de funcionamento em UTC (8h às 18h)
+    const hour = start.getUTCHours();
     if (hour < 8 || hour >= 18) throw new Error("Fora do horário");
 
-    const slotStart = normalizeToSlotStart(start);
-    const slotEnd = addMinutes(slotStart, 30);
+    // Normalização para o slot (ex: 13:00 até 13:30)
+    const slotStart = new Date(start);
+    slotStart.setUTCSeconds(0, 0);
+    
+    const slotEnd = new Date(slotStart);
+    slotEnd.setUTCMinutes(slotStart.getUTCMinutes() + 30);
 
     const count = await this.repo.countBySlot({
       ...(ignoreId ? { _id: { $ne: ignoreId } } : {}),
@@ -45,3 +47,4 @@ export class AppointmentService {
     if (count >= 3) throw new Error("Horário lotado");
   }
 }
+
