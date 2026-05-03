@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 export interface IAppointment {
   userId: mongoose.Types.ObjectId;
+  barberId: mongoose.Types.ObjectId; // 🔥 NOVO
 
   service: string;
   scheduledAt: Date;
@@ -17,6 +18,12 @@ const AppointmentSchema = new mongoose.Schema<IAppointment>(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+    },
+
+    barberId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Barber",
+      required: true, // 🔥 obrigatório agora
     },
 
     service: {

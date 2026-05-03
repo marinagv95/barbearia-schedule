@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
 import appointmentRoutes from "./routes/appointment.routes";
+import barberRoutes from "./routes/barber.routes";
+
 
 const app = express();
 
@@ -14,6 +16,7 @@ app.get("/", (req, res) => {
 });
 
 // Rotas da aplicação
+app.use(barberRoutes);
 app.use("/appointments", appointmentRoutes);
 
 export default app;

@@ -2,10 +2,12 @@ import { Request, Response } from "express";
 import { AppointmentRepository } from "../repositories/AppointmentRepository";
 import { AppointmentService } from "../services/AppointmentService";
 import { formatDate } from "../utils/formatDate";
+import { toBrazilTime } from "../utils/date";
 import { updateStatusSchema } from "../schemas/updateStatus.schema";
 import { rescheduleSchema } from "../schemas/reschedule.schema";
 import { createAppointmentSchema } from "../schemas/appointment.schema";
 import { User } from "../models/User";
+import { Barber } from "../models/Barber";
 
 const repo = new AppointmentRepository();
 const service = new AppointmentService();
@@ -21,9 +23,19 @@ export class AppointmentController {
 
       const start = new Date(data.scheduledAt);
 
-      await service.validateSlot(start);
+      // 🔥 valida slot (com barbeiro)
+      await service.validateSlot(start, data.barberId);
 
-      // cria ou reutiliza user automaticamente
+      // 🔥 valida barbeiro
+      const barber = await Barber.findById(data.barberId);
+
+      if (!barber || !barber.active) {
+        return res.status(404).json({
+          message: "Barbeiro não encontrado ou inativo",
+        });
+      }
+
+      // 🔥 cria ou reutiliza usuário
       let user = await User.findOne({ phone: data.phone });
 
       if (!user) {
@@ -35,6 +47,7 @@ export class AppointmentController {
 
       const appointment = await repo.create({
         userId: user._id,
+        barberId: data.barberId,
         service: data.service,
         scheduledAt: start,
         price: data.price,
@@ -42,14 +55,15 @@ export class AppointmentController {
 
       return res.status(201).json({
         ...appointment.toObject(),
-        scheduledAtFormatted: formatDate(appointment.scheduledAt),
+        scheduledAtFormatted: formatDate(
+          toBrazilTime(appointment.scheduledAt)
+        ),
       });
 
     } catch (err: any) {
-      if (err.message === "Horário lotado") {
+      if (err.message === "Horário ocupado") {
         return res.status(409).json({
-          message: "Erro de validação",
-          error: err.message,
+          message: err.message,
         });
       }
 
@@ -67,7 +81,9 @@ export class AppointmentController {
     return res.json(
       data.map((a: any) => ({
         ...a.toObject(),
-        scheduledAtFormatted: formatDate(a.scheduledAt),
+        scheduledAtFormatted: formatDate(
+          toBrazilTime(a.scheduledAt)
+        ),
       }))
     );
   }
@@ -82,7 +98,9 @@ export class AppointmentController {
 
     return res.json({
       ...appointment.toObject(),
-      scheduledAtFormatted: formatDate(appointment.scheduledAt),
+      scheduledAtFormatted: formatDate(
+        toBrazilTime(appointment.scheduledAt)
+      ),
     });
   }
 
@@ -114,7 +132,9 @@ export class AppointmentController {
 
     return res.json({
       ...appointment.toObject(),
-      scheduledAtFormatted: formatDate(appointment.scheduledAt),
+      scheduledAtFormatted: formatDate(
+        toBrazilTime(appointment.scheduledAt)
+      ),
     });
   }
 
@@ -131,7 +151,12 @@ export class AppointmentController {
         return res.status(404).json({ message: "Não encontrado" });
       }
 
-      await service.validateSlot(start, req.params.id);
+      // 🔥 valida slot com barbeiro correto
+      await service.validateSlot(
+        start,
+        appointment.barberId.toString(),
+        req.params.id
+      );
 
       appointment.scheduledAt = start;
       await repo.update(appointment);
@@ -140,7 +165,9 @@ export class AppointmentController {
         message: "Remarcado com sucesso",
         appointment: {
           ...appointment.toObject(),
-          scheduledAtFormatted: formatDate(appointment.scheduledAt),
+          scheduledAtFormatted: formatDate(
+            toBrazilTime(appointment.scheduledAt)
+          ),
         },
       });
 
@@ -164,7 +191,7 @@ export class AppointmentController {
 
   // AVAILABLE SLOTS
   async getAvailableSlots(req: Request, res: Response) {
-    const { date } = req.query;
+    const { date, barberId } = req.query;
 
     if (!date || typeof date !== "string") {
       return res.status(400).json({
@@ -172,25 +199,40 @@ export class AppointmentController {
       });
     }
 
+    if (!barberId || typeof barberId !== "string") {
+      return res.status(400).json({
+        message: "Barbeiro obrigatório",
+      });
+    }
+
     const start = new Date(`${date}T00:00:00.000Z`);
     const end = new Date(`${date}T23:59:59.999Z`);
 
-    const appointments = await repo.findByDateRange(start, end);
+    const appointments = await repo.findByDateRange(
+      start,
+      end,
+      barberId
+    );
 
     const slots: string[] = [];
 
     for (let h = 8; h < 18; h++) {
       for (let m of [0, 30]) {
+
         const key = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 
-        const count = appointments.filter((a) => {
-          const d = new Date(a.scheduledAt);
+        const isOccupied = appointments.some((a: any) => {
+          const d = toBrazilTime(a.scheduledAt);
+
           const hh = String(d.getHours()).padStart(2, "0");
           const mm = d.getMinutes() < 30 ? "00" : "30";
-          return `${hh}:${mm}` === key;
-        }).length;
 
-        if (count < 3) slots.push(key);
+          return `${hh}:${mm}` === key;
+        });
+
+        if (!isOccupied) {
+          slots.push(key);
+        }
       }
     }
 
