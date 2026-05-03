@@ -1,18 +1,6 @@
 import mongoose from "mongoose";
 
-export interface IAppointment {
-  userId: mongoose.Types.ObjectId;
-  barberId: mongoose.Types.ObjectId; // 🔥 NOVO
-
-  service: string;
-  scheduledAt: Date;
-
-  status: "pending" | "confirmed" | "canceled" | "done";
-
-  price?: number;
-}
-
-const AppointmentSchema = new mongoose.Schema<IAppointment>(
+const AppointmentSchema = new mongoose.Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -23,12 +11,27 @@ const AppointmentSchema = new mongoose.Schema<IAppointment>(
     barberId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Barber",
-      required: true, // 🔥 obrigatório agora
+      required: true,
     },
 
+    // 💡 mantém string por enquanto (compatível com teu fluxo atual)
     service: {
       type: String,
       required: true,
+      trim: true,
+    },
+
+    // 🔥 já preparado pra evolução futura (Service model)
+    serviceId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Service",
+      required: false,
+    },
+
+    duration: {
+      type: Number,
+      default: 30,
+      min: 10,
     },
 
     scheduledAt: {
@@ -38,21 +41,11 @@ const AppointmentSchema = new mongoose.Schema<IAppointment>(
 
     status: {
       type: String,
-      enum: ["pending", "confirmed", "canceled", "done"],
+      enum: ["pending", "confirmed", "done", "canceled"],
       default: "pending",
     },
-
-    price: {
-      type: Number,
-      default: 0,
-    },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-export const Appointment = mongoose.model<IAppointment>(
-  "Appointment",
-  AppointmentSchema
-);
+export const Appointment = mongoose.model("Appointment", AppointmentSchema);

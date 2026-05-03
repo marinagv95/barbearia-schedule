@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import appointmentRoutes from "./routes/appointment.routes";
 import barberRoutes from "./routes/barber.routes";
+import serviceRoutes from "./routes/service.routes";
 
 
 const app = express();
@@ -17,6 +18,8 @@ app.get("/", (req, res) => {
 
 // Rotas da aplicação
 app.use(barberRoutes);
+app.use("/services", serviceRoutes);
+
 app.use("/appointments", appointmentRoutes);
 
 export default app;

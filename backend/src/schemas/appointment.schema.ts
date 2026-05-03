@@ -11,12 +11,5 @@ export const createAppointmentSchema = z.object({
     message: "Data inválida",
   }),
 
-  barberId: z.string().min(1, "Barbeiro obrigatório"), // 🔥 NOVO
-
-  price: z
-    .union([
-      z.number(),
-      z.string().transform((val) => Number(val)),
-    ])
-    .optional(),
+  barberId: z.string().min(1, "Barbeiro obrigatório"),
 });

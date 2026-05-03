@@ -8,23 +8,26 @@ import { rescheduleSchema } from "../schemas/reschedule.schema";
 import { createAppointmentSchema } from "../schemas/appointment.schema";
 import { User } from "../models/User";
 import { Barber } from "../models/Barber";
+import { getId } from "../utils/getId";
 
 const repo = new AppointmentRepository();
 const service = new AppointmentService();
 
 type IdRequest = Request<{ id: string }>;
 
+// =========================
+// 💈 CONTROLLER
+// =========================
 export class AppointmentController {
 
+  // =========================
   // CREATE
+  // =========================
   async create(req: Request, res: Response) {
     try {
       const data = createAppointmentSchema.parse(req.body);
 
       const start = new Date(data.scheduledAt);
-
-      // 🔥 valida slot (com barbeiro)
-      await service.validateSlot(start, data.barberId);
 
       // 🔥 valida barbeiro
       const barber = await Barber.findById(data.barberId);
@@ -35,7 +38,10 @@ export class AppointmentController {
         });
       }
 
-      // 🔥 cria ou reutiliza usuário
+      // 🔥 valida slot
+      await service.validateSlot(start, data.barberId);
+
+      // 🔥 user
       let user = await User.findOne({ phone: data.phone });
 
       if (!user) {
@@ -45,26 +51,23 @@ export class AppointmentController {
         });
       }
 
+      // 🔥 cria agendamento
       const appointment = await repo.create({
         userId: user._id,
-        barberId: data.barberId,
+        barberId: barber._id,
         service: data.service,
         scheduledAt: start,
-        price: data.price,
+        status: "pending",
       });
 
       return res.status(201).json({
         ...appointment.toObject(),
-        scheduledAtFormatted: formatDate(
-          toBrazilTime(appointment.scheduledAt)
-        ),
+        scheduledAtFormatted: formatDate(toBrazilTime(appointment.scheduledAt)),
       });
 
     } catch (err: any) {
       if (err.message === "Horário ocupado") {
-        return res.status(409).json({
-          message: err.message,
-        });
+        return res.status(409).json({ message: err.message });
       }
 
       return res.status(400).json({
@@ -74,21 +77,23 @@ export class AppointmentController {
     }
   }
 
+  // =========================
   // LIST
+  // =========================
   async list(req: Request, res: Response) {
     const data = await repo.findAll();
 
     return res.json(
       data.map((a: any) => ({
         ...a.toObject(),
-        scheduledAtFormatted: formatDate(
-          toBrazilTime(a.scheduledAt)
-        ),
+        scheduledAtFormatted: formatDate(toBrazilTime(a.scheduledAt)),
       }))
     );
   }
 
+  // =========================
   // GET BY ID
+  // =========================
   async getById(req: IdRequest, res: Response) {
     const appointment = await repo.findById(req.params.id);
 
@@ -98,13 +103,13 @@ export class AppointmentController {
 
     return res.json({
       ...appointment.toObject(),
-      scheduledAtFormatted: formatDate(
-        toBrazilTime(appointment.scheduledAt)
-      ),
+      scheduledAtFormatted: formatDate(toBrazilTime(appointment.scheduledAt)),
     });
   }
 
+  // =========================
   // UPDATE STATUS
+  // =========================
   async updateStatus(req: IdRequest, res: Response) {
     const { status } = updateStatusSchema.parse(req.body);
 
@@ -114,7 +119,7 @@ export class AppointmentController {
       return res.status(404).json({ message: "Não encontrado" });
     }
 
-    const allowed: any = {
+    const allowed: Record<string, string[]> = {
       pending: ["confirmed", "canceled"],
       confirmed: ["done", "canceled"],
       done: [],
@@ -132,13 +137,13 @@ export class AppointmentController {
 
     return res.json({
       ...appointment.toObject(),
-      scheduledAtFormatted: formatDate(
-        toBrazilTime(appointment.scheduledAt)
-      ),
+      scheduledAtFormatted: formatDate(toBrazilTime(appointment.scheduledAt)),
     });
   }
 
+  // =========================
   // RESCHEDULE
+  // =========================
   async reschedule(req: IdRequest, res: Response) {
     try {
       const { scheduledAt } = rescheduleSchema.parse(req.body);
@@ -151,23 +156,22 @@ export class AppointmentController {
         return res.status(404).json({ message: "Não encontrado" });
       }
 
-      // 🔥 valida slot com barbeiro correto
-      await service.validateSlot(
-        start,
-        appointment.barberId.toString(),
-        req.params.id
-      );
+      // 🔥 agora seguro (sem populate bug / sem toString)
+      const barberId = getId(appointment.barberId);
+
+      // 🔥 valida slot
+      await service.validateSlot(start, barberId, req.params.id);
 
       appointment.scheduledAt = start;
+      appointment.status = "pending";
+
       await repo.update(appointment);
 
       return res.json({
         message: "Remarcado com sucesso",
         appointment: {
           ...appointment.toObject(),
-          scheduledAtFormatted: formatDate(
-            toBrazilTime(appointment.scheduledAt)
-          ),
+          scheduledAtFormatted: formatDate(toBrazilTime(start)),
         },
       });
 
@@ -178,7 +182,9 @@ export class AppointmentController {
     }
   }
 
+  // =========================
   // DELETE
+  // =========================
   async delete(req: IdRequest, res: Response) {
     const deleted = await repo.delete(req.params.id);
 
@@ -189,20 +195,18 @@ export class AppointmentController {
     return res.json({ message: "Deletado com sucesso" });
   }
 
+  // =========================
   // AVAILABLE SLOTS
+  // =========================
   async getAvailableSlots(req: Request, res: Response) {
     const { date, barberId } = req.query;
 
     if (!date || typeof date !== "string") {
-      return res.status(400).json({
-        message: "Data obrigatória",
-      });
+      return res.status(400).json({ message: "Data obrigatória" });
     }
 
     if (!barberId || typeof barberId !== "string") {
-      return res.status(400).json({
-        message: "Barbeiro obrigatório",
-      });
+      return res.status(400).json({ message: "Barbeiro obrigatório" });
     }
 
     const start = new Date(`${date}T00:00:00.000Z`);
@@ -218,7 +222,6 @@ export class AppointmentController {
 
     for (let h = 8; h < 18; h++) {
       for (let m of [0, 30]) {
-
         const key = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 
         const isOccupied = appointments.some((a: any) => {
