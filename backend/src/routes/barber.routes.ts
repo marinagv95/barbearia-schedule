@@ -5,10 +5,10 @@ const router = Router();
 const controller = new BarberController();
 
 // 🔹 CRUD Barbeiro
-router.post("/barbers", controller.create);
-router.get("/barbers", controller.list);
-router.get("/barbers/:id", controller.getById);
-router.put("/barbers/:id", controller.update);
-router.delete("/barbers/:id", controller.delete);
+router.post("/", controller.create);
+router.get("/", controller.list);
+router.get("/:id", controller.getById);
+router.put("/:id", controller.update);
+router.delete("/:id", controller.delete);
 
 export default router;

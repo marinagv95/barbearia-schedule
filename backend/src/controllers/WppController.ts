@@ -1,53 +1,103 @@
 import { Request, Response } from "express";
+
 import { ChatbotService } from "../services/ChatbotService";
 
-const chatbot = new ChatbotService();
+const chatbot =
+  new ChatbotService();
 
 export class WppController {
-  // 🔥 WEBHOOK DO WHATSAPP
-  async webhook(req: Request, res: Response) {
-    try {
-      // mensagem enviada pelo usuário
-      const message: string = req.body.message?.body || "";
 
-      // telefone do usuário (identificação)
-      const phone: string = req.body.sender?.id || "";
+  // =========================
+  // 🔥 WEBHOOK WHATSAPP
+  // =========================
+
+  async webhook(
+    req: Request,
+    res: Response
+  ) {
+
+    try {
+
+      // 🔥 mensagem
+      const message: string =
+        req.body.message?.body || "";
+
+      // 🔥 telefone
+      const phone: string =
+        req.body.sender?.id || "";
+
+      // 🔥 nome do contato
+      const pushName: string =
+        req.body.sender?.pushName ||
+        "Cliente";
 
       if (!message || !phone) {
+
         return res.status(400).json({
-          message: "Payload inválido",
+          message:
+            "Payload inválido",
         });
       }
 
-      // 🔥 chama o cérebro do chatbot
-      const reply = await chatbot.handle(message, phone);
+      // 🔥 chatbot
+      const reply =
+        await chatbot.handle(
+          message,
+          phone,
+          pushName
+        );
 
       return res.json({
         success: true,
         reply,
       });
+
     } catch (err: any) {
+
       return res.status(500).json({
-        message: "Erro no webhook do WhatsApp",
+        message:
+          "Erro no webhook do WhatsApp",
+
         error: err.message,
       });
     }
   }
 
-  // 🔥 opcional: teste manual (sem WhatsApp)
-  async test(req: Request, res: Response) {
-    try {
-      const { message, phone } = req.body;
+  // =========================
+  // 🔥 TESTE MANUAL
+  // =========================
 
-      const reply = await chatbot.handle(message, phone);
+  async test(
+    req: Request,
+    res: Response
+  ) {
+
+    try {
+
+      const {
+        message,
+        phone,
+        pushName,
+      } = req.body;
+
+      const reply =
+        await chatbot.handle(
+          message,
+          phone,
+          pushName || "Cliente"
+        );
 
       return res.json({
         input: message,
         reply,
       });
+
     } catch (err: any) {
+
       return res.status(500).json({
-        message: "Erro no teste do chatbot",
+        message:
+          "Erro no teste do chatbot",
+
         error: err.message,
       });
     }

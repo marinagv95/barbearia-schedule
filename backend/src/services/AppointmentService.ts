@@ -6,6 +6,7 @@ import {
   addMinutes,
 } from "../utils/timeSlots";
 import { toBrazilTime } from "../utils/date";
+import { AppError } from "../utils/appError";
 
 export class AppointmentService {
   constructor(private repo = new AppointmentRepository()) {}
@@ -17,42 +18,35 @@ export class AppointmentService {
   ) {
     const now = new Date();
 
-    // 🔥 converte tudo pra Brasil
     const brDate = toBrazilTime(start);
     const brNow = toBrazilTime(now);
 
-    // 🔥 passado
     if (brDate < brNow) {
-      throw new Error("Não pode agendar no passado");
+      throw new AppError("Não pode agendar no passado", 400);
     }
 
-    // 🔥 domingo
     if (brDate.getDay() === 0) {
-      throw new Error("Domingo fechado");
+      throw new AppError("Domingo fechado", 400);
     }
 
-    // 🔥 feriado
     const holiday = getHolidayName(brDate);
     if (holiday) {
-      throw new Error(`Feriado (${holiday})`);
+      throw new AppError(`Feriado (${holiday})`, 400);
     }
 
-    // 🔥 horário funcionamento (Brasil)
     const hour = brDate.getHours();
+
     if (hour < 8 || hour >= 18) {
-      throw new Error("Fora do horário");
+      throw new AppError("Fora do horário (08h às 18h)", 400);
     }
 
-    // 🔥 valida slot (00 ou 30)
     if (!isValidSlotTime(brDate)) {
-      throw new Error("Use intervalos de 30 minutos");
+      throw new AppError("Use intervalos de 30 minutos", 400);
     }
 
-    // 🔥 normaliza slot (Brasil)
     const slotStartBR = normalizeToSlotStart(brDate);
     const slotEndBR = addMinutes(slotStartBR, 30);
 
-    // 🔥 converte pra UTC pra consultar no banco
     const slotStartUTC = new Date(slotStartBR.toISOString());
     const slotEndUTC = new Date(slotEndBR.toISOString());
 
@@ -63,7 +57,7 @@ export class AppointmentService {
     });
 
     if (count >= 1) {
-      throw new Error("Horário ocupado");
+      throw new AppError("Horário ocupado", 409);
     }
   }
 }

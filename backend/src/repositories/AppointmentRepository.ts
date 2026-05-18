@@ -7,48 +7,95 @@ export class AppointmentRepository {
   }
 
   async findById(id: string) {
+
     return Appointment.findById(id)
-      .populate("userId", "name phone")
-      .populate("barberId", "name");
+
+      .populate(
+        "customerId",
+        "name phone"
+      )
+
+      .populate(
+        "barberId",
+        "name"
+      );
   }
 
   async findAll() {
+
     return Appointment.find()
-      .populate("userId", "name phone")
-      .populate("barberId", "name")
-      .sort({ scheduledAt: 1 });
+
+      .populate(
+        "customerId",
+        "name phone"
+      )
+
+      .populate(
+        "barberId",
+        "name"
+      )
+
+      .sort({
+        scheduledAt: 1,
+      });
   }
 
   async delete(id: string) {
-    return Appointment.findByIdAndDelete(id);
+
+    return Appointment.findByIdAndDelete(
+      id
+    );
   }
 
   async update(appointment: any) {
+
     return appointment.save();
   }
 
   async findByPhone(phone: string) {
-    return Appointment.findOne({ phone });
-  }
 
-  // 🔥 conta apenas agendamentos ativos no slot (por barbeiro)
-  async countBySlot(filter: any) {
-    return Appointment.countDocuments({
-      ...filter,
-      status: { $ne: "canceled" },
+    return Appointment.findOne({
+      phone,
     });
   }
 
-  // 🔥 busca agendamentos do dia POR BARBEIRO
+  // =========================
+  // 🔥 SLOT COUNT
+  // =========================
+
+  async countBySlot(filter: any) {
+
+    return Appointment.countDocuments({
+      ...filter,
+
+      status: {
+        $ne: "canceled",
+      },
+    });
+  }
+
+  // =========================
+  // 🔥 DATE RANGE
+  // =========================
+
   async findByDateRange(
     start: Date,
     end: Date,
     barberId: string
   ) {
+
     return Appointment.find({
+
       barberId,
-      scheduledAt: { $gte: start, $lte: end },
-      status: { $ne: "canceled" },
+
+      scheduledAt: {
+        $gte: start,
+        $lte: end,
+      },
+
+      status: {
+        $ne: "canceled",
+      },
     });
   }
 }
