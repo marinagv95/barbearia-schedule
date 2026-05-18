@@ -1,5 +1,39 @@
-# browser bot / chromium cache
-backend/tokens/
-**/tokens/
+# =========================
+# Logs
+# =========================
 *.log
 *.journal
+
+# =========================
+# Node / dependencies
+# =========================
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+
+# =========================
+# Build outputs
+# =========================
+dist/
+build/
+dist-ssr/
+
+# =========================
+# Environment
+# =========================
+.env
+.env.local
+.env.*.local
+
+# =========================
+# Browser bot / Chromium cache
+# =========================
+backend/tokens/
+**/tokens/
+
+# =========================
+# Editor / system files
+# =========================
+.vscode/
+.idea/
+.DS_Store

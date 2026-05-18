@@ -39,40 +39,55 @@ O projeto simula um sistema real de mercado, com foco em experiência premium, l
 
 ## 🧩 Funcionalidades e telas
 
-### 🏠 Home
-- Hero carousel com imagens automáticas
-- Apresentação da barbearia
-- Listagem de serviços
-- Listagem de barbeiros
-- Mapa integrado com Google Maps
-- Botão de agendamento via WhatsApp
+# 🧩 Funcionalidades e telas
+
+## 🏠 Home
+- Hero carousel com imagens automáticas  
+- Apresentação da barbearia  
+- Listagem de serviços  
+- Listagem de barbeiros  
+- Mapa integrado com Google Maps  
+- Botão de agendamento via WhatsApp  
 
 ---
 
-### 💈 Barbeiros
-- Listagem de barbeiros
-- Filtro por nome
-- Criar barbeiro (modal)
-- Editar barbeiro (modal)
-- Deletar barbeiro
-- Atualização em tempo real com Context API
+## 🔐 Autenticação (Login)
+- Login via modal na home  
+- Sistema de autenticação com JWT  
+- Persistência de sessão via localStorage  
+- Logout disponível no dashboard  
+
+### 🧪 Credenciais para teste
+Para acessar o sistema, utilize:
+
+- **Email:** `teste@email.com`  
+- **Senha:** `123456`
 
 ---
 
-### ✂️ Serviços
-- Listagem de serviços
-- Criar serviço
-- Editar serviço
-- Deletar serviço
-- Controle de preço e duração
-- Modais de CRUD
+## 💈 Barbeiros
+- Listagem de barbeiros  
+- Filtro por nome  
+- Criar barbeiro (modal)  
+- Editar barbeiro (modal)  
+- Deletar barbeiro  
+- Atualização em tempo real com Context API  
 
 ---
 
-### 📍 Localização
-- Mapa integrado com Google Maps
-- Localização: Partage Shopping Campina Grande
+## ✂️ Serviços
+- Listagem de serviços  
+- Criar serviço  
+- Editar serviço  
+- Deletar serviço  
+- Controle de preço e duração  
+- Modais de CRUD  
 
+---
+
+## 📍 Localização
+- Mapa integrado com Google Maps  
+- Localização: Partage Shopping Campina Grande  
 ---
 
 ### 🎨 Interface (UI/UX)
