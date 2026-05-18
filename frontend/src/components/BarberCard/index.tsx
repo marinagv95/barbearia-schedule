@@ -1,21 +1,17 @@
-import { useContext } from "react";
-
-import { BarberContext } from "../../providers/barberProviders/barberContext";
-
 import type { IBarber } from "../../providers/barberProviders/@types";
 
 interface BarberCardProps {
   barber: IBarber;
+
+  onClick: () => void;
 }
 
 export function BarberCard({
   barber,
+  onClick,
 }: BarberCardProps) {
-  const { deleteBarber } =
-    useContext(BarberContext);
-
   return (
-    <div>
+    <div onClick={onClick}>
       <h3>{barber.name}</h3>
 
       <p>
@@ -24,14 +20,6 @@ export function BarberCard({
           ? " Ativo"
           : " Inativo"}
       </p>
-
-      <button
-        onClick={() =>
-          deleteBarber(barber._id)
-        }
-      >
-        Deletar
-      </button>
     </div>
   );
 }

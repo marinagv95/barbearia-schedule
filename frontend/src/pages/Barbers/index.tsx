@@ -1,83 +1,115 @@
-import { useContext } from "react";
-
-import { useForm } from "react-hook-form";
-
-import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  useContext,
+  useState,
+} from "react";
 
 import { BarberContext } from "../../providers/barberProviders/barberContext";
 
+import type { IBarber } from "../../providers/barberProviders/@types";
+
 import { BarberCard } from "../../components/BarberCard";
 
-import {
-  createBarberSchema,
-  type CreateBarberFormData,
-} from "../../validators/barber.schema";
+import { BarberModal } from "../../components/BarberModal";
+
+import { CreateBarberModal } from "../../components/CreateBarberModal";
 
 export default function Barbers() {
+
   const {
     barbers,
-    createBarber,
     loading,
   } = useContext(BarberContext);
 
-  const {
-    register,
-    handleSubmit,
-    reset,
+  const [search, setSearch] =
+    useState("");
 
-    formState: { errors },
-  } = useForm<CreateBarberFormData>({
-    resolver: zodResolver(
-      createBarberSchema
-    ),
-  });
+  const [
+    selectedBarber,
+    setSelectedBarber,
+  ] = useState<IBarber | null>(null);
 
-  const handleCreateBarber =
-    async (
-      formData: CreateBarberFormData
-    ) => {
-      await createBarber(formData);
+  const [
+    createModal,
+    setCreateModal,
+  ] = useState(false);
 
-      reset();
-    };
+  const filteredBarbers =
+    barbers.filter((barber) =>
+      barber.name
+        .toLowerCase()
+        .includes(
+          search.toLowerCase()
+        )
+    );
 
   return (
     <div>
+
       <h1>Barbeiros</h1>
 
-      <form
-        onSubmit={handleSubmit(
-          handleCreateBarber
-        )}
-      >
+      <nav>
+
         <input
           type="text"
-          placeholder="Nome do barbeiro"
-          {...register("name")}
+          placeholder="Pesquisar barbeiro"
+          value={search}
+          onChange={(event) =>
+            setSearch(
+              event.target.value
+            )
+          }
         />
 
-        {errors.name && (
-          <p>{errors.name.message}</p>
-        )}
-
         <button
-          type="submit"
-          disabled={loading}
+          type="button"
+          onClick={() =>
+            setCreateModal(true)
+          }
         >
-          {loading
-            ? "Criando..."
-            : "Criar barbeiro"}
+          Criar barbeiro
         </button>
-      </form>
 
-      <div>
-        {barbers.map((barber) => (
-          <BarberCard
-            key={barber._id}
-            barber={barber}
-          />
-        ))}
-      </div>
+      </nav>
+
+      {loading ? (
+        <p>Carregando...</p>
+      ) : (
+        <div>
+
+          {filteredBarbers.map(
+            (barber) => (
+              <BarberCard
+                key={barber._id}
+                barber={barber}
+                onClick={() =>
+                  setSelectedBarber(
+                    barber
+                  )
+                }
+              />
+            )
+          )}
+
+        </div>
+      )}
+
+      {selectedBarber && (
+        <BarberModal
+          barber={selectedBarber}
+          onClose={() =>
+            setSelectedBarber(null)
+          }
+        />
+      )}
+
+      {createModal && (
+        <CreateBarberModal
+          onClose={() =>
+            setCreateModal(false)
+          }
+        />
+      )}
+
     </div>
   );
 }
