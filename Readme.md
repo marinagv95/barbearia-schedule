@@ -1,8 +1,11 @@
 # 💈 BarberFlow — Sistema de Barbearia SaaS
 
 ## 👥 Integrantes do grupo
+- Ana Karolyne Oliveira Araujo
+- José Luiz Nogueira Silva
 - Marina Guimarães
--
+- Raphael Vicente Lima Araújo
+- Samires do Carmo dos Santos
 
 ---
 
@@ -13,8 +16,6 @@ O **BarberFlow** é um sistema SaaS para gerenciamento de barbearias, permitindo
 O projeto simula um sistema real de mercado, com foco em experiência premium, layout escuro e organização baseada em componentes reutilizáveis e Context API.
 
 ---
-
-## 🚀 Tecnologias utilizadas
 
 ## 🚀 Tecnologias Utilizadas
 
