@@ -1,4 +1,4 @@
-import type { IBarber } from "../../providers/barberProviders/@types";
+import type { IBarber } from "../../../providers/barberProviders/@types";
 
 interface BarberCardProps {
   barber: IBarber;

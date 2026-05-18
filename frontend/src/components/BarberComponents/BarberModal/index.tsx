@@ -1,7 +1,7 @@
 import { useContext, useState } from "react";
 
-import type { IBarber } from "../../providers/barberProviders/@types";
-import { BarberContext } from "../../providers/barberProviders/barberContext";
+import type { IBarber } from "../../../providers/barberProviders/@types";
+import { BarberContext } from "../../../providers/barberProviders/barberContext";
 
 interface BarberModalProps {
   barber: IBarber;

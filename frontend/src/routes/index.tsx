@@ -4,14 +4,18 @@ import Home from "../pages/HomePage";
 import Barbers from "../pages/Barbers";
 import PageNotFound from "../pages/PageNotFound";
 
+import { ProtectedRoutes } from "./ProtectedRoutes";
+
 export function AppRoutes() {
   return (
     <Routes>
-      {/* HOME */}
+      {/* HOME (pública) */}
       <Route path="/" element={<Home />} />
 
-      {/* BARBEIROS */}
-      <Route path="/barbers" element={<Barbers />} />
+      {/* ROTAS PROTEGIDAS */}
+      <Route element={<ProtectedRoutes />}>
+        <Route path="/barbers" element={<Barbers />} />
+      </Route>
 
       {/* 404 */}
       <Route path="*" element={<PageNotFound />} />

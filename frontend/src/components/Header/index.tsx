@@ -1,6 +1,12 @@
+import { useContext } from "react";
 import logo from "../../assets/logoBF.png";
 
+import { AuthContext } from "../../providers/auth/AuthContext";
+
 export function Header() {
+  const { user, logout, setLoginModalOpen } =
+    useContext(AuthContext);
+
   return (
     <header
       style={{
@@ -41,58 +47,75 @@ export function Header() {
 
       {/* NAV */}
       <nav style={{ display: "flex", gap: "16px", alignItems: "center" }}>
-        <a
-          href="#services"
-          style={{
-            color: "#aaa",
-            textDecoration: "none",
-            fontSize: "14px",
-            transition: "0.2s",
-          }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.color = "#c8a24a")
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.color = "#aaa")
-          }
-        >
+        <a href="#services" style={linkStyle}>
           Serviços
         </a>
 
-        <a
-          href="#barbers"
-          style={{
-            color: "#aaa",
-            textDecoration: "none",
-            fontSize: "14px",
-            transition: "0.2s",
-          }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.color = "#c8a24a")
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.color = "#aaa")
-          }
-        >
+        <a href="#barbers" style={linkStyle}>
           Barbeiros
         </a>
 
         <a
           href="https://wa.me/5511999999999"
           target="_blank"
-          style={{
-            background: "#25D366",
-            color: "#fff",
-            padding: "6px 10px",
-            borderRadius: "8px",
-            textDecoration: "none",
-            fontSize: "13px",
-            fontWeight: 500,
-          }}
+          style={whatsStyle}
         >
           WhatsApp
         </a>
+
+        {/* 🔐 AUTH BUTTON */}
+        {!user ? (
+          <button
+            onClick={() => setLoginModalOpen(true)}
+            style={loginBtn}
+          >
+            Entrar
+          </button>
+        ) : (
+          <button
+            onClick={logout}
+            style={logoutBtn}
+          >
+            Sair
+          </button>
+        )}
       </nav>
     </header>
   );
 }
+
+/* styles */
+const linkStyle: React.CSSProperties = {
+  color: "#aaa",
+  textDecoration: "none",
+  fontSize: "14px",
+};
+
+const whatsStyle: React.CSSProperties = {
+  background: "#25D366",
+  color: "#fff",
+  padding: "6px 10px",
+  borderRadius: "8px",
+  textDecoration: "none",
+  fontSize: "13px",
+  fontWeight: 500,
+};
+
+const loginBtn: React.CSSProperties = {
+  background: "#c8a24a",
+  border: "none",
+  padding: "6px 12px",
+  borderRadius: "8px",
+  cursor: "pointer",
+  fontWeight: 600,
+};
+
+const logoutBtn: React.CSSProperties = {
+  background: "#ff4d4d",
+  border: "none",
+  padding: "6px 12px",
+  borderRadius: "8px",
+  cursor: "pointer",
+  fontWeight: 600,
+  color: "#fff",
+};

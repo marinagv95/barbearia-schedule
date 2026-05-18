@@ -1,8 +1,8 @@
 import { useContext } from "react";
 
 import { Header } from "../../components/Header";
-import { BarberCard } from "../../components/BarberCard";
-import { ServiceCard } from "../../components/ServiceCard";
+import { BarberCard } from "../../components/BarberComponents/BarberCard";
+import { ServiceCard } from "../../components/ServiceComponents/ServiceCard";
 import { LocationMap } from "../../components/LocationMap";
 import { HeroCarousel } from "../../components/HeroCarousel";
 

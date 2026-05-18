@@ -1,5 +1,5 @@
 import { useContext, useState } from "react";
-import { BarberContext } from "../../providers/barberProviders/barberContext";
+import { BarberContext } from "../../../providers/barberProviders/barberContext";
 
 interface CreateBarberModalProps {
   onClose: () => void;

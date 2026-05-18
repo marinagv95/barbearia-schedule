@@ -1,5 +1,4 @@
 import { useContext, useState } from "react";
-
 import type { CSSProperties } from "react";
 
 import { BarberContext } from "../../providers/barberProviders/barberContext";
@@ -8,13 +7,15 @@ import { ServiceContext } from "../../providers/serviceProviders/serviceContext"
 import type { IBarber } from "../../providers/barberProviders/@types";
 import type { IService } from "../../providers/serviceProviders/@types";
 
-import { BarberCard } from "../../components/BarberCard";
-import { BarberModal } from "../../components/BarberModal";
-import { CreateBarberModal } from "../../components/CreateBarberModal";
+import { BarberCard } from "../../components/BarberComponents/BarberCard";
+import { BarberModal } from "../../components/BarberComponents/BarberModal";
+import { CreateBarberModal } from "../../components/BarberComponents/CreateBarberModal";
 
-import { ServiceCard } from "../../components/ServiceCard";
-import { ServiceModal } from "../../components/ServiceModal";
-import { CreateServiceModal } from "../../components/CreateServiceModal";
+import { ServiceCard } from "../../components/ServiceComponents/ServiceCard";
+import { ServiceModal } from "../../components/ServiceComponents/ServiceModal";
+import { CreateServiceModal } from "../../components/ServiceComponents/CreateServiceModal";
+
+import { LogoutButton } from "../../components/LoginComponents/LogoutButton";
 
 export default function AdminPanel() {
   const { barbers, loading: loadingBarbers } = useContext(BarberContext);
@@ -51,7 +52,19 @@ export default function AdminPanel() {
 
   return (
     <div style={containerStyle}>
-      <h1 style={{ marginBottom: "16px" }}>Dashboard</h1>
+      {/* HEADER DO DASHBOARD */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "16px",
+        }}
+      >
+        <h1>Dashboard</h1>
+
+        <LogoutButton />
+      </div>
 
       {/* SEARCH + ACTIONS */}
       <div
@@ -80,30 +93,14 @@ export default function AdminPanel() {
 
         <button
           onClick={() => setCreateBarber(true)}
-          style={{
-            padding: "10px 14px",
-            borderRadius: "8px",
-            border: "none",
-            cursor: "pointer",
-            background: "#c8a24a",
-            color: "#000",
-            fontWeight: "bold",
-          }}
+          style={actionBtn}
         >
           + Barbeiro
         </button>
 
         <button
           onClick={() => setCreateService(true)}
-          style={{
-            padding: "10px 14px",
-            borderRadius: "8px",
-            border: "none",
-            cursor: "pointer",
-            background: "#c8a24a",
-            color: "#000",
-            fontWeight: "bold",
-          }}
+          style={actionBtn}
         >
           + Serviço
         </button>
@@ -168,3 +165,13 @@ export default function AdminPanel() {
     </div>
   );
 }
+
+const actionBtn: CSSProperties = {
+  padding: "10px 14px",
+  borderRadius: "8px",
+  border: "none",
+  cursor: "pointer",
+  background: "#c8a24a",
+  color: "#000",
+  fontWeight: "bold",
+};

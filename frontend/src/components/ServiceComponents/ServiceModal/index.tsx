@@ -1,7 +1,7 @@
 import { useContext, useState } from "react";
 
-import type { IService } from "../../providers/serviceProviders/@types";
-import { ServiceContext } from "../../providers/serviceProviders/serviceContext";
+import type { IService } from "../../../providers/serviceProviders/@types";
+import { ServiceContext } from "../../../providers/serviceProviders/serviceContext";
 
 interface ServiceModalProps {
   service: IService;

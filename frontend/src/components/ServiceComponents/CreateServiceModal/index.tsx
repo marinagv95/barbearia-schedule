@@ -1,5 +1,5 @@
 import { useContext, useState } from "react";
-import { ServiceContext } from "../../providers/serviceProviders/serviceContext";
+import { ServiceContext } from "../../../providers/serviceProviders/serviceContext";
 
 interface CreateServiceModalProps {
   onClose: () => void;
