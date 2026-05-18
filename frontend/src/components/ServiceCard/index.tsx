@@ -1,25 +1,26 @@
-import type { IBarber } from "../../providers/barberProviders/@types";
-
-interface BarberCardProps {
-  barber: IBarber;
-  onClick: () => void;
+interface Service {
+  name: string;
+  price: number;
+  duration: number;
 }
 
-export function BarberCard({ barber, onClick }: BarberCardProps) {
+interface ServiceCardProps {
+  service: Service;
+  onSelect?: () => void;
+}
+
+export function ServiceCard({ service, onSelect }: ServiceCardProps) {
   return (
     <div
-      onClick={onClick}
+      onClick={onSelect}
       style={{
         background: "#111",
         border: "1px solid #222",
         borderRadius: "12px",
-        padding: "12px",
+        padding: "14px",
         color: "#f5f5f5",
         cursor: "pointer",
         transition: "0.2s ease",
-
-        /* 🔥 CONTROLE DE TAMANHO */
-        width: "100%",
         maxWidth: "220px",
         minHeight: "90px",
 
@@ -50,18 +51,19 @@ export function BarberCard({ barber, onClick }: BarberCardProps) {
           textOverflow: "ellipsis",
         }}
       >
-        {barber.name}
+        {service.name}
       </h3>
 
-      {/* STATUS */}
+      {/* PRICE + DURATION */}
       <p
         style={{
           margin: 0,
           fontSize: "13px",
-          color: barber.active ? "#4caf50" : "#ff4d4d",
+          color: "#c8a24a",
+          fontWeight: 500,
         }}
       >
-        {barber.active ? "● Ativo" : "● Inativo"}
+        R$ {service.price} • {service.duration} min
       </p>
     </div>
   );
