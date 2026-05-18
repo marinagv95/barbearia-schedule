@@ -5,7 +5,9 @@ import appointmentRoutes from "./routes/appointment.routes";
 import barberRoutes from "./routes/barber.routes";
 import serviceRoutes from "./routes/service.routes";
 
-import { startWppBot } from "./bot/wppClient";import userRoutes from "./routes/user.routes";
+import { startWppBot } from "./bot/wppClient";
+import userRoutes from "./routes/user.routes";
+import authRoutes from "./routes/auth.routes";
 
 
 const app = express();
@@ -23,10 +25,12 @@ app.get("/", (req, res) => {
 // =========================
 // ROUTES
 // =========================
+app.use("/auth", authRoutes);
 app.use("/users", userRoutes);
 app.use("/barbers", barberRoutes);
 app.use("/services", serviceRoutes);
 app.use("/appointments", appointmentRoutes);
+
 
 
 // =========================

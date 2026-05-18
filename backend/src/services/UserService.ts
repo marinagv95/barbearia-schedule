@@ -1,17 +1,34 @@
-import { UserRepository } from "../repositories/UserRepository";
+import bcrypt from "bcryptjs";
+import { User } from "../models/User";
 
 export class UserService {
-  private repo = new UserRepository();
-
   async create(data: any) {
-    return this.repo.create(data);
+    const userExists = await User.findOne({ email: data.email });
+
+    if (userExists) {
+      throw new Error("Usuário já existe");
+    }
+
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+
+    const usersCount = await User.countDocuments();
+
+    const role = usersCount === 0 ? "admin" : "user";
+
+    const user = await User.create({
+      ...data,
+      password: hashedPassword,
+      role,
+    });
+
+    return user;
   }
 
   async findAll() {
-    return this.repo.findAll();
+    return User.find().select("-password");
   }
 
   async findById(id: string) {
-    return this.repo.findById(id);
+    return User.findById(id).select("-password");
   }
 }
