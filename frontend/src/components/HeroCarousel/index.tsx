@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import logo from "../../assets/logoBF.png";
 const images = [
   {
     url: "https://images.unsplash.com/photo-1503951914875-452162b0f3f1",
@@ -60,31 +59,6 @@ export function HeroCarousel() {
           maxWidth: "80%",
         }}
       >
-        <h2
-          style={{
-            margin: 0,
-            fontSize: "28px",
-            fontWeight: 700,
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
-            color: "#fff",
-          }}
-        >
-          <img
-            src={logo}
-            alt="BarberFlow"
-            style={{
-              width: "50px",
-              height: "50px",
-              borderRadius: "50%",
-              objectFit: "cover",
-              boxShadow: "0 0 10px rgba(200,162,74,0.35)",
-            }}
-          />
-          BarberFlow
-        </h2>
-
         <p
           style={{
             margin: 0,

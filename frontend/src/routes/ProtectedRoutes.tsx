@@ -6,7 +6,6 @@ import { AuthContext } from "../providers/auth/AuthContext";
 export function ProtectedRoutes() {
   const { user, loading } = useContext(AuthContext);
 
-  // 🔄 Loader enquanto valida token / /me
   if (loading) {
     return (
       <div
@@ -26,6 +25,5 @@ export function ProtectedRoutes() {
     );
   }
 
-  // 🔒 Bloqueia acesso se não estiver logado
   return user ? <Outlet /> : <Navigate to="/" />;
 }
