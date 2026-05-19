@@ -14,7 +14,7 @@ const ServiceSchema = new mongoose.Schema(
 
     duration: {
       type: Number,
-      required: true, // em minutos
+      required: true, 
     },
 
     active: {
