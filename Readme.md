@@ -40,7 +40,6 @@ O projeto simula um sistema real de mercado, com foco em experiência premium, l
 
 ---
 
-## 🧩 Funcionalidades e telas
 
 # 🧩 Funcionalidades e telas
 
