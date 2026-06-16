@@ -225,37 +225,50 @@ O projeto está dividido em uma arquitetura monorepo, separando as responsabilid
 barbearia-app/
 ├── backend/                  # Servidor Node.js (API REST & Chatbot)
 │   └── src/
-│       ├── bot/              # Configuração e inicialização do wppconnect
+│       ├── bot/              # Configuração do WhatsApp bot (wppconnect)
 │       ├── config/           # Configurações de banco de dados e ambiente
-│       ├── controllers/      # Regras de orquestração de rotas (HTTP)
-│       ├── models/           # Definição dos modelos e entidades de dados
-│       ├── repositories/     # Camada de persistência e manipulação do banco
-│       ├── routes/           # Definição dos endpoints da API
-│       ├── schemas/          # Validações de esquemas de dados
-│       ├── services/         # Regras de negócio da aplicação (Regendamentos, Chatbot...)
-│       └── utils/            # Funções utilitárias e tratamento de erros
+│       ├── controllers/      # Camada de controle das requisições HTTP
+│       ├── models/           # Modelos do banco de dados (MongoDB / Mongoose)
+│       ├── repositories/     # Acesso e persistência de dados
+│       ├── routes/           # Definição de rotas da API
+│       ├── schemas/          # Validação de dados (Zod)
+│       ├── services/         # Regras de negócio (agendamentos, bot, etc)
+│       └── utils/            # Funções auxiliares e tratamento de erros
 │
-├── frontend/                 # Interface Web em React (Vite + TypeScript)
+├── frontend/                 # Interface Web (React + Vite + TypeScript)
 │   └── src/
-│       ├── assets/           # Imagens, logos e arquivos estáticos
-│       ├── components/       # Componentes reaproveitáveis da interface
-│       │   ├── AppointmentForm/
-│       │   ├── BarberCard/
-│       │   ├── BarberModal/
-│       │   ├── CreateBarberModal/
-│       │   ├── CreateServiceModal/
+│       ├── assets/           # Imagens e arquivos estáticos
+│       ├── components/       # Componentes reutilizáveis
+│       │   ├── AppointmentComponents/
+│       │   │   ├── AppointmentCard/
+│       │   │   ├── AppointmentModal/
+│       │   │   ├── CreateAppointmentModal/
+│       │   │   └── index
+│       │   ├── BarberComponents/
+│       │   ├── ServiceComponents/
+│       │   ├── DashboardComponents/
 │       │   ├── Header/
 │       │   ├── HeroCarousel/
 │       │   ├── LocationMap/
-│       │   ├── ServiceCard/
-│       │   ├── ServiceModal/
-│       │   └── Sidebar/
+│       │   └── LogoutButton/
+│       │
 │       ├── pages/            # Páginas principais da aplicação
-│       ├── providers/        # Contextos globais da aplicação (Context API)
-│       ├── routes/           # Gerenciamento de rotas e navegação da SPA
-│       ├── services/         # Integração com a API (Axios)
-│       └── validators/       # Esquemas de validação de formulários (Zod/Yup)
-
+│       │   ├── AdminPanel/
+│       │   ├── Appointments/
+│       │   ├── Barbers/
+│       │   └── HomePage/
+│       │
+│       ├── providers/        # Context API (estado global)
+│       │   ├── appointmentProvider/
+│       │   ├── barberProviders/
+│       │   ├── serviceProviders/
+│       │   └── auth/
+│       │
+│       ├── routes/           # Rotas da SPA
+│       ├── services/         # Axios / integração com API
+│       ├── validators/       # Schemas Zod (frontend)
+│       ├── hooks/            # Hooks customizados
+│       └── main.tsx
 
 
 ```
