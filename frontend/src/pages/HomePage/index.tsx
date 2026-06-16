@@ -21,6 +21,89 @@ export default function Home() {
       {/* HERO CAROUSEL */}
       <HeroCarousel />
 
+       {/* ================= CTA WHATSAPP (MOVIDO PRA CIMA E ESTILIZADO) ================= */}
+      <section
+        style={{
+          margin: "40px 0",
+          padding: "50px 30px",
+          borderRadius: "28px",
+          background:
+            "linear-gradient(135deg, rgba(200,162,74,0.12), rgba(0,0,0,0.85))",
+          border: "1px solid rgba(200,162,74,0.2)",
+          position: "relative",
+          overflow: "hidden",
+          textAlign: "center",
+          boxShadow: "0 20px 60px rgba(0,0,0,0.6)",
+        }}
+      >
+        {/* glow */}
+        <div
+          style={{
+            position: "absolute",
+            width: "300px",
+            height: "300px",
+            background: "rgba(200,162,74,0.12)",
+            filter: "blur(80px)",
+            top: "-120px",
+            left: "-120px",
+          }}
+        />
+
+        <div style={{ position: "relative", zIndex: 2 }}>
+          <h2
+            style={{
+              color: "#fff",
+              fontSize: "34px",
+              fontWeight: 800,
+              marginBottom: "10px",
+            }}
+          >
+            Agende seu horário em segundos
+          </h2>
+
+          <p
+            style={{
+              color: "rgba(255,255,255,0.7)",
+              fontSize: "16px",
+              maxWidth: "600px",
+              margin: "0 auto 25px auto",
+              lineHeight: 1.6,
+            }}
+          >
+            Escolha seu barbeiro, veja os serviços e marque seu atendimento
+            direto pelo WhatsApp sem complicação.
+          </p>
+
+          <a
+            href="https://wa.me/5511999999999"
+            target="_blank"
+            style={{
+              display: "inline-block",
+              padding: "14px 28px",
+              borderRadius: "999px",
+              background: "linear-gradient(135deg, #25D366, #1faa52)",
+              color: "#fff",
+              fontWeight: 700,
+              fontSize: "16px",
+              textDecoration: "none",
+              boxShadow: "0 10px 25px rgba(37,211,102,0.25)",
+              transition: "all 0.2s ease",
+            }}
+            onMouseOver={(e) => {
+              (e.currentTarget as HTMLAnchorElement).style.transform =
+                "scale(1.05)";
+            }}
+            onMouseOut={(e) => {
+              (e.currentTarget as HTMLAnchorElement).style.transform =
+                "scale(1)";
+            }}
+          >
+            Agendar no WhatsApp 💬
+          </a>
+        </div>
+
+        </section>
+
       {/* SERVICES */}
       <section id="services" className="mb-5">
         <h2 className="fw-bold mb-3">Serviços</h2>
@@ -279,22 +362,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA FINAL */}
-      <div className="text-center py-5">
-        <div className="mb-3">
-          <h4 className="fw-bold">Pronto para seu novo visual?</h4>
-
-          <p className="text-muted-custom">Agende agora e evite filas</p>
-        </div>
-
-        <a
-          href="https://wa.me/5511999999999"
-          target="_blank"
-          className="btn btn-success btn-lg px-5 fw-bold shadow"
-        >
-          Agendar no WhatsApp 💬
-        </a>
-      </div>
+   
 
       {/* FOOTER */}
       <footer

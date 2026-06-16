@@ -37,3 +37,6 @@ backend/tokens/
 .vscode/
 .idea/
 .DS_Store
+*.env
+*.env.*
+*.7z

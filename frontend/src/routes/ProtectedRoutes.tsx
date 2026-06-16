@@ -16,8 +16,6 @@ export function ProtectedRoutes() {
           justifyContent: "center",
           background: "#0f0f0f",
           color: "#fff",
-          fontSize: "14px",
-          opacity: 0.8,
         }}
       >
         Carregando...
@@ -25,5 +23,10 @@ export function ProtectedRoutes() {
     );
   }
 
-  return user ? <Outlet /> : <Navigate to="/" />;
+  // 👇 só decide depois que carregou de verdade
+  if (!user) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <Outlet />;
 }

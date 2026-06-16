@@ -5,7 +5,20 @@ const AppointmentSchema = new mongoose.Schema(
     customerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Customer",
+      required: false, // Fica opcional para o fluxo do WhatsApp funcionar sem usuário logado
+    },
+
+    // 💡 CAMPOS ADICIONADOS: Para salvar o nome e telefone direto no agendamento vindo do WhatsApp
+    clientName: {
+      type: String,
       required: true,
+      trim: true,
+    },
+
+    phone: {
+      type: String,
+      required: true,
+      trim: true,
     },
 
     barberId: {

@@ -21,6 +21,10 @@ export const createAppointmentSchema =
     barberId: z
       .string()
       .min(1, "Barbeiro obrigatório"),
+
+    price: z
+      .number()
+      .min(0, "O preço não pode ser negativo"),
   });
 
 export type CreateAppointmentFormData =

@@ -102,23 +102,20 @@ export class AppointmentController {
         }
       }
 
-      // =========================
-      // 🔥 CRIA AGENDAMENTO
-      // =========================
 
-      const appointment =
-        await repo.create({
-          userId: customer._id,
 
-          barberId: barber._id,
+const appointment = await repo.create({
+customerId: customer._id, // 👈 CORRIGIDO: Mudado de userId para customerId  
+  // 💡 ADICIONE ESTAS DUAS LINHAS:
+  clientName: customer.name, // Pega o nome definitivo (atualizado ou criado)
+  phone: customer.phone,     // Pega o telefone já limpo
 
-          service: data.service,
-
-          scheduledAt: start,
-
-          status: "pending",
-        });
-
+  barberId: barber._id,
+  service: data.service,
+  scheduledAt: start,
+  status: "pending",
+  price: data.price // Adicione aqui se tiver colocado o preço no Zod/Mongoose também!
+});
       return res.status(201).json({
         ...appointment.toObject(),
 

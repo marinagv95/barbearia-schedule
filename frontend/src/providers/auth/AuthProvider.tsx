@@ -8,56 +8,37 @@ import { AuthContext } from "./AuthContext";
 import type { IAuthProviderProps, IUser, ILoginData } from "./@types";
 
 export function AuthProvider({ children }: IAuthProviderProps) {
-  const [user, setUser] = useState<IUser | null>(null);
-  const [loading, setLoading] = useState(false);
+  // 💡 MUDANÇA 1: O estado do usuário já inicia tentando ler o que foi salvo no navegador
+  const [user, setUser] = useState<IUser | null>(() => {
+    const storageUser = localStorage.getItem("@USER");
+    return storageUser ? JSON.parse(storageUser) : null;
+  });
+  
+  // 💡 MUDANÇA 2: O loading inicia como TRUE se houver token E usuário salvos
+  const [loading, setLoading] = useState(() => {
+    const token = localStorage.getItem("@TOKEN");
+    const storageUser = localStorage.getItem("@USER");
+    return !!(token && storageUser); 
+  });
 
-  // 🪟 modal login
   const [loginModalOpen, setLoginModalOpen] = useState(false);
-
   const navigate = useNavigate();
 
   // =========================
-  // 🔐 AUTO LOGIN (/me)
+  // 🔐 AUTO LOGIN LOCAL (Sem rota /me)
   // =========================
   useEffect(() => {
     const token = localStorage.getItem("@TOKEN");
+    const storageUser = localStorage.getItem("@USER");
 
-    if (!token) return;
-
-    const loadUser = async () => {
-      try {
-        const response = await api.get("/me", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        const userData = response.data;
-
-        setUser(userData);
-
-        api.defaults.headers.common.Authorization = `Bearer ${token}`;
-      } catch (error) {
-        localStorage.removeItem("@TOKEN");
-        setUser(null);
-      }
-    };
-
-    loadUser();
-  }, []);
-
-  // =========================
-  // 🔐 REDIRECT CENTRALIZADO
-  // =========================
-  useEffect(() => {
-    if (!user) return;
-
-    if (user.role === "admin") {
-      navigate("/barbers");
-    } else {
-      navigate("/");
+    // Se tiver os dados salvos localmente, restaura a sessão e reconfigura o axios
+    if (token && storageUser) {
+      api.defaults.headers.common.Authorization = `Bearer ${token}`;
+      setUser(JSON.parse(storageUser));
     }
-  }, [user, navigate]);
+
+    setLoading(false); // Desliga o loading imediatamente
+  }, []);
 
   // =========================
   // 🔐 LOGIN
@@ -68,17 +49,25 @@ export function AuthProvider({ children }: IAuthProviderProps) {
 
       const response = await api.post("/auth/login", data);
 
-      const { token, user } = response.data;
+      const { token, user: loggedUser } = response.data;
 
+      // 💡 MUDANÇA 3: Além do token, salvamos os dados do usuário em formato de texto (string)
       localStorage.setItem("@TOKEN", token);
+      localStorage.setItem("@USER", JSON.stringify(loggedUser)); 
 
       api.defaults.headers.common.Authorization = `Bearer ${token}`;
 
-      setUser(user);
-
-      setLoginModalOpen(false); // fecha modal
+      setUser(loggedUser);
+      setLoginModalOpen(false);
 
       toast.success("Login realizado com sucesso");
+
+      if (loggedUser.role === "admin") {
+        navigate("/barbers");
+      } else {
+        navigate("/");
+      }
+
     } catch (error) {
       toast.error("Email ou senha inválidos");
     } finally {
@@ -90,14 +79,14 @@ export function AuthProvider({ children }: IAuthProviderProps) {
   // 🔐 LOGOUT
   // =========================
   const logout = () => {
+    // 💡 MUDANÇA 4: Remove tudo do localStorage ao deslogar
     localStorage.removeItem("@TOKEN");
+    localStorage.removeItem("@USER");
 
     delete api.defaults.headers.common.Authorization;
 
     setUser(null);
-
     navigate("/");
-
     toast.success("Logout realizado com sucesso");
   };
 
@@ -108,8 +97,6 @@ export function AuthProvider({ children }: IAuthProviderProps) {
         loading,
         login,
         logout,
-
-        // 🪟 modal
         loginModalOpen,
         setLoginModalOpen,
       }}
